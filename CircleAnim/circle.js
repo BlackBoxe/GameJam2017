@@ -1,5 +1,8 @@
 
 var desiredIP = '192.168.1.5';
+var offsetX = 0; // devrait etre autour de -8000 / 8000
+var offsetY = 0; // devrait etre autour de -8000 / 8000
+var scale = 1; // echelle
 
 var EtherDream = require('./etherdream.js').EtherDream;
 
@@ -34,6 +37,10 @@ EtherDream.find(function(all) {
 		}
 
 		function blackPoint(framedata,x,y){
+			x += offsetX;
+			y += offsetY;
+			x *= scale;
+			y *= scale;
 			for(var i=0; i<5 ; i++) {
 				var pt = {};
 				pt.x = x;
@@ -50,6 +57,11 @@ EtherDream.find(function(all) {
 		}
 
 		function setPoint(framedata,x,y){
+			x += offsetX;
+			y += offsetY;
+			x *= scale;
+			y *= scale;
+
 			for(var i=0; i<5 ; i++) {
 				var pt = {};
 				pt.x = x;
@@ -90,6 +102,16 @@ EtherDream.find(function(all) {
 		}
 
 		function drawline(framedata, x0,y0, x1,y1, r,g,b) {
+
+			x0 += offsetX;
+			y0 += offsetY;
+			x0 *= scale;
+			y0 *= scale;
+			x1 += offsetX;
+			y1 += offsetY;
+			x1 *= scale;
+			y1 *= scale;
+
 			var dx = Math.abs(x1 - x0);
 			var dy = Math.abs(y1 - y0);
 			var d = Math.round(4 + (Math.sqrt(dx*dx + dy*dy) / 400));
@@ -260,6 +282,11 @@ EtherDream.find(function(all) {
 				y1 = Math.sin(angle) * 7000 +  Math.sin(angle*loops) * -2000 * (radius-0.5);
 				angle += 3.25 / 40;
 
+				x1 += offsetX;
+				y1 += offsetY;
+				x1 *= scale;
+				y1 *= scale;
+
 				var pt = {};
 				pt.x = x1;
 				pt.y = y1;
@@ -278,6 +305,11 @@ EtherDream.find(function(all) {
 			x1 = Math.cos(angle) * 5500 * radius + Math.cos(angle*(loops+3)) * 2000 * (-radius+0.5) ;
 			y1 = Math.sin(angle) * 5500 * radius +  Math.sin(angle*(loops+3)) * -2000 * (-radius+0.5) ;
 
+			x1 += offsetX;
+			y1 += offsetY;
+			x1 *= scale;
+			y1 *= scale;
+
 			blackPoint(framedata,x1,y1);
 
 			for(var i=0; i<80; i++) {
@@ -285,6 +317,11 @@ EtherDream.find(function(all) {
 				x1 = Math.cos(angle) * 5500 * radius + Math.cos(angle*(loops+3)) * 2000 * (-radius+0.5) ;
 				y1 = Math.sin(angle) * 5500 * radius +  Math.sin(angle*(loops+3)) * -2000 * (-radius+0.5) ;
 				angle += 3.17 / 40;
+
+				x1 += offsetX;
+				y1 += offsetY;
+				x1 *= scale;
+				y1 *= scale;
 
 				var pt = {};
 				pt.x = x1;
@@ -391,10 +428,3 @@ EtherDream.find(function(all) {
 
 	});
 });
-
-
-
-
-
-
-
