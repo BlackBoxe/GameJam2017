@@ -12,6 +12,7 @@ import itertools
 import sys
 import time
 import thread
+import pygame
 
 from lib import dac
 from lib.common import *
@@ -23,6 +24,18 @@ import numpy
 """
 CONFIGURATION
 """
+
+try:
+    pygame.init()
+    pygame.joystick.init()
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    def get_joy():
+        e = pygame.event.get()
+        return 100.0*joystick.get_axis(0),100.0*joystick.get_axis(1),joystick.get_axis(5), joystick.get_axis(2)
+except:
+    def get_joy():
+        return 0.0,0.0,-1.0,-1.0
 
 LASER_POWER_DENOM = 1.0
 
@@ -86,12 +99,13 @@ class Tunnel(Shape):
 		self.ddy = 0.0
 		self.points = []
 		self.t = 0.0
+                self.flag = False
 		self.obstacles = []
 		for i in [3.0,5.0,10.0,20.0,30.0,40.0,50.0]:
 			self.obstacles.append((i,make_obstacle(random.randint(0,2)==0,
 												   vertical_center=random.uniform(-0.5,0.5),
 												   height=random.uniform(0.2,1.0),
-												   width=random.uniform(0.0,0.5))))
+												   width=random.uniform(2.0,2.0))))
 	def produce(self):
 		"""
 		Generate the points of the circle.
@@ -101,12 +115,34 @@ class Tunnel(Shape):
 		r, g, b = (CMAX, CMAX, CMAX)
 		self.t += 0.1
 		self.z += self.dz
-		self.x = 1000.0*math.sin(0.05*self.t) # adding a bit of movement to the camera
-		self.y = 1000.0*math.sin(0.5*self.t)
+		self.x += 10.0*math.sin(0.05*self.t) # adding a bit of movement to the camera
+		self.y += 10.0*math.sin(0.5*self.t)
+                jx,jy, jf, jb = get_joy()
+                self.x += jx
+                self.y += jy
+                self.dz = 0.03
+                if jf > -1.0:
+                    self.dz = 0.07
+                if jf > 0.0:
+                    self.dz = 0.3
+                if jb < -0.9:
+                    self.flag = False
+                if jb > 0.9 and not self.flag:
+                    self.flag = True
+                    if len(self.obstacles) > 0:
+    		        self.obstacles.pop()
+                        self.obstacles.append((self.z + random.randint(20,50),
+		             make_obstacle(random.randint(0,2)==0,
+                             vertical_center=random.uniform(-0.5,0.5),
+												   height=random.uniform(0.2,1.0),
+												   width=random.uniform(2.0,2.0))))
+			
 		last_points = None
 		for segment in range(6):
+		        r, g, b = (0.0*CMAX, CMAX, 0.0*CMAX)
 			distance = (segment+2) - (self.z)%1.0
-			scale = 10000.0/distance
+			scale = 20000.0/distance # Scale factor for the tunnel
+                        
 			# we get the offset to the center point and scale it according to distance
 			offset_x = 1.0*(self.x - self.origin[0]) * math.sqrt(math.sqrt(distance)) # the offset diminishes nonlinear with distance
 			offset_y = 1.0*(self.y - self.origin[1]) * math.sqrt(math.sqrt(distance)) # somehow the fourth root looked ok
@@ -119,6 +155,7 @@ class Tunnel(Shape):
 			for (o,model) in self.obstacles:
 				if math.floor(self.z + segment) <= o and math.ceil(self.z + segment) > o:
 					# an obstacle replaces the whole section with a new model
+		                        r, g, b = (CMAX, CMAX*0.0, CMAX*0.0)
 					rect_points = model
 				if self.z > o+2:
 					# we are past this obstacle, so we can make a random new one
@@ -127,7 +164,7 @@ class Tunnel(Shape):
 						                   make_obstacle(random.randint(0,2)==0,
 												   vertical_center=random.uniform(-0.5,0.5),
 												   height=random.uniform(0.2,1.0),
-												   width=random.uniform(0.0,0.5))))
+												   width=random.uniform(2.0,2.0))))
 			rect_points = numpy.array(rect_points)
 			rect_points *= scale
 			rect_points[:,0] += offset_x
